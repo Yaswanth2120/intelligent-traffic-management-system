@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aggregated-features.schema.json",
+  "title": "AggregatedFeatures",
+  "type": "object",
+  "required": [
+    "route",
+    "window_start",
+    "window_size_sec",
+    "requests_per_sec",
+    "error_rate",
+    "avg_latency_ms",
+    "p95_latency_ms",
+    "unique_clients"
+  ],
+  "properties": {
+    "route": { "type": "string", "minLength": 1 },
+    "window_start": { "type": "integer", "minimum": 0 },
+    "window_size_sec": { "type": "integer", "minimum": 1 },
+    "requests_per_sec": { "type": "number", "minimum": 0 },
+    "error_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+    "avg_latency_ms": { "type": "number", "minimum": 0 },
+    "p95_latency_ms": { "type": "number", "minimum": 0 },
+    "unique_clients": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

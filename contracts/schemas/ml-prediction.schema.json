@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ml-prediction.schema.json",
+  "title": "MlPrediction",
+  "type": "object",
+  "required": [
+    "route",
+    "model_version",
+    "predicted_rps",
+    "spike_probability",
+    "risk_level",
+    "prediction_horizon_sec"
+  ],
+  "properties": {
+    "route": { "type": "string", "minLength": 1 },
+    "model_version": { "type": "string", "minLength": 1 },
+    "predicted_rps": { "type": "number", "minimum": 0 },
+    "spike_probability": { "type": "number", "minimum": 0, "maximum": 1 },
+    "risk_level": { "type": "string", "enum": ["low", "medium", "high"] },
+    "prediction_horizon_sec": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

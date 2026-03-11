@@ -1,0 +1,31 @@
+name: Phase 1 CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required files
+        run: |
+          test -f README.md
+          test -f pom.xml
+          test -f contracts/schemas/traffic-metrics.schema.json
+          test -f contracts/schemas/aggregated-features.schema.json
+          test -f contracts/schemas/ml-prediction.schema.json
+          test -f contracts/schemas/traffic-decision.schema.json
+          test -f infra/docker/docker-compose.yml
+          test -f ml-service/app/main.py
+
+  python-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile ML service
+        run: python -m py_compile ml-service/app/main.py

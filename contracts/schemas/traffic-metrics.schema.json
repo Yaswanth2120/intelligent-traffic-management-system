@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "traffic-metrics.schema.json",
+  "title": "TrafficMetric",
+  "type": "object",
+  "required": [
+    "route",
+    "timestamp",
+    "method",
+    "status",
+    "latency_ms",
+    "client_id",
+    "client_ip"
+  ],
+  "properties": {
+    "route": { "type": "string", "minLength": 1 },
+    "timestamp": { "type": "integer", "minimum": 0 },
+    "method": { "type": "string", "minLength": 1 },
+    "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+    "latency_ms": { "type": "number", "minimum": 0 },
+    "client_id": { "type": "string", "minLength": 1 },
+    "client_ip": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

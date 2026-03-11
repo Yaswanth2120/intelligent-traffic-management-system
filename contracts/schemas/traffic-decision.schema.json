@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "traffic-decision.schema.json",
+  "title": "TrafficDecision",
+  "type": "object",
+  "required": [
+    "route",
+    "decision_time",
+    "policy_type",
+    "reason",
+    "ttl_sec"
+  ],
+  "properties": {
+    "route": { "type": "string", "minLength": 1 },
+    "decision_time": { "type": "integer", "minimum": 0 },
+    "policy_type": {
+      "type": "string",
+      "enum": ["RATE_LIMIT", "REROUTE", "LOAD_SHED", "SCALE_SIGNAL"]
+    },
+    "rate_limit_rps": { "type": "integer", "minimum": 0 },
+    "reason": { "type": "string", "minLength": 1 },
+    "ttl_sec": { "type": "integer", "minimum": 1 }
+  },
+  "additionalProperties": false
+}

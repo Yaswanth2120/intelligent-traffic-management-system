@@ -16,6 +16,8 @@
 
   <properties>
     <java.version>17</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
     <spring.boot.version>3.3.2</spring.boot.version>
   </properties>
 
@@ -37,6 +39,14 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
+          <configuration>
+            <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>

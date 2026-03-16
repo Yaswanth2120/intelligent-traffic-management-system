@@ -81,3 +81,14 @@ Distributed platform for predicting API traffic, preventing overload, and reduci
 ## Next Step
 
 Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md) for the system contract and [docs/roadmap.md](/Users/yaswanth/Desktop/Project1/docs/roadmap.md) for execution phases.
+
+## Phase 2 Breakdown
+
+- Part 1: gateway telemetry foundation
+  - add a real `/api/orders` route
+  - capture request metadata and latency
+  - publish `traffic_metrics` events to Kafka asynchronously
+- Part 2: feature aggregation pipeline
+  - consume `traffic_metrics` in `feature-service`
+  - compute rolling traffic windows
+  - persist hot windows to Redis and history to PostgreSQL

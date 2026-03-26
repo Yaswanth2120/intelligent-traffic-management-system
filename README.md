@@ -92,3 +92,8 @@ Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md
   - consume `traffic_metrics` in `feature-service`
   - compute rolling traffic windows
   - persist hot windows to Redis and history to PostgreSQL
+
+## Phase 2 Status
+
+- Part 1 completed: gateway route plus traffic metric publishing
+- Part 2 completed: feature-service consumes `traffic_metrics`, aggregates rolling route windows, stores hot state in Redis, writes history to PostgreSQL, and publishes `aggregated_features`

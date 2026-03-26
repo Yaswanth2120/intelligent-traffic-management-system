@@ -1,6 +1,16 @@
 spring:
   application:
     name: feature-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/traffic_platform}
+    username: ${POSTGRES_USER:traffic_user}
+    password: ${POSTGRES_PASSWORD:traffic_pass}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 management:
   endpoints:
@@ -14,3 +24,10 @@ management:
 
 server:
   port: 8081
+
+traffic:
+  aggregation:
+    window-size-sec: 60
+  topics:
+    traffic-metrics: traffic_metrics
+    aggregated-features: aggregated_features

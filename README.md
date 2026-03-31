@@ -97,3 +97,19 @@ Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md
 
 - Part 1 completed: gateway route plus traffic metric publishing
 - Part 2 completed: feature-service consumes `traffic_metrics`, aggregates rolling route windows, stores hot state in Redis, writes history to PostgreSQL, and publishes `aggregated_features`
+
+## Phase 3 Breakdown
+
+- Part 1: ML prediction pipeline
+  - accept aggregated traffic windows
+  - score predicted RPS, spike probability, and risk level
+  - consume `aggregated_features` and publish `ml_predictions`
+- Part 2: decision engine and gateway control loop
+  - consume `ml_predictions`
+  - generate traffic policies
+  - publish `traffic_decisions`
+  - enforce dynamic gateway policies
+
+## Phase 3 Status
+
+- Part 1 completed: ML service now supports aggregate-based prediction and an optional Kafka pipeline from `aggregated_features` to `ml_predictions`

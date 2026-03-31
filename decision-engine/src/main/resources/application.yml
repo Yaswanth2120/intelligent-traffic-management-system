@@ -1,6 +1,22 @@
 spring:
   application:
     name: decision-engine
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  datasource:
+    url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/traffic_platform}
+    username: ${POSTGRES_USER:traffic_user}
+    password: ${POSTGRES_PASSWORD:traffic_pass}
+
+traffic:
+  policy:
+    service-capacity-rps: 250
+    default-ttl-sec: 120
+    high-risk-rate-limit-rps: 175
+    medium-risk-rate-limit-rps: 220
+  topics:
+    ml-predictions: ml_predictions
+    traffic-decisions: traffic_decisions
 
 management:
   endpoints:

@@ -113,3 +113,4 @@ Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md
 ## Phase 3 Status
 
 - Part 1 completed: ML service now supports aggregate-based prediction and an optional Kafka pipeline from `aggregated_features` to `ml_predictions`
+- Part 2 completed: decision-engine converts predictions into traffic policies and gateway enforces active route rate limits from `traffic_decisions`

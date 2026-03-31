@@ -21,6 +21,7 @@ create table if not exists policy_decisions (
     route text not null,
     decision_time bigint not null,
     policy_type text not null,
+    rate_limit_rps integer,
     reason text not null,
     ttl_sec integer not null
 );

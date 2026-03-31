@@ -12,8 +12,11 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 traffic:
+  enforcement:
+    default-limit-rps: 1000
   topics:
     traffic-metrics: traffic_metrics
+    traffic-decisions: traffic_decisions
 
 management:
   endpoints:

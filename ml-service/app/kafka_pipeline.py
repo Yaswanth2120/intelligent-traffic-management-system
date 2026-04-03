@@ -3,10 +3,10 @@ import contextlib
 import json
 import logging
 import os
-from collections.abc import Awaitable
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
+from .metrics import kafka_prediction_publish_total
 from .models import AggregatedFeaturesRequest
 from .predictor import predict_from_aggregate
 
@@ -57,7 +57,12 @@ class KafkaPredictionPipeline:
             async for message in consumer:
                 payload = AggregatedFeaturesRequest(**message.value)
                 prediction = predict_from_aggregate(payload)
-                await producer.send_and_wait(self.output_topic, prediction.model_dump())
+                try:
+                    await producer.send_and_wait(self.output_topic, prediction.model_dump())
+                    kafka_prediction_publish_total.labels(result="success").inc()
+                except Exception:
+                    kafka_prediction_publish_total.labels(result="failure").inc()
+                    raise
         finally:
             await consumer.stop()
             await producer.stop()

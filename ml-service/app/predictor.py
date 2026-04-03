@@ -1,4 +1,5 @@
 from .models import AggregatedFeaturesRequest, PredictionRequest, PredictionResponse
+from .metrics import prediction_risk_total, prediction_rps_gauge, prediction_spike_probability
 
 
 def predict_from_aggregate(request: AggregatedFeaturesRequest) -> PredictionResponse:
@@ -24,7 +25,7 @@ def predict_from_aggregate(request: AggregatedFeaturesRequest) -> PredictionResp
     else:
         risk_level = "low"
 
-    return PredictionResponse(
+    response = PredictionResponse(
         route=request.route,
         model_version="baseline-v2-aggregate",
         predicted_rps=predicted_rps,
@@ -32,6 +33,10 @@ def predict_from_aggregate(request: AggregatedFeaturesRequest) -> PredictionResp
         risk_level=risk_level,
         prediction_horizon_sec=request.window_size_sec,
     )
+    prediction_rps_gauge.labels(route=response.route).set(response.predicted_rps)
+    prediction_spike_probability.labels(route=response.route).set(response.spike_probability)
+    prediction_risk_total.labels(route=response.route, risk_level=response.risk_level).inc()
+    return response
 
 
 def predict_from_legacy(request: PredictionRequest) -> PredictionResponse:

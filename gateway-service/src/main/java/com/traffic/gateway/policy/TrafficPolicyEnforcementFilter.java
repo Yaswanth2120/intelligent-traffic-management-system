@@ -16,13 +16,16 @@ public class TrafficPolicyEnforcementFilter implements GlobalFilter, Ordered {
     private final ActivePolicyStore activePolicyStore;
     private final FixedWindowRateLimiter rateLimiter;
     private final GatewayTrafficProperties properties;
+    private final GatewayPolicyMetricsRecorder metricsRecorder;
 
     public TrafficPolicyEnforcementFilter(ActivePolicyStore activePolicyStore,
                                           FixedWindowRateLimiter rateLimiter,
-                                          GatewayTrafficProperties properties) {
+                                          GatewayTrafficProperties properties,
+                                          GatewayPolicyMetricsRecorder metricsRecorder) {
         this.activePolicyStore = activePolicyStore;
         this.rateLimiter = rateLimiter;
         this.properties = properties;
+        this.metricsRecorder = metricsRecorder;
     }
 
     @Override
@@ -33,6 +36,7 @@ public class TrafficPolicyEnforcementFilter implements GlobalFilter, Ordered {
         int effectiveLimit = policy != null ? policy.rateLimitRps() : properties.enforcement().defaultLimitRps();
 
         if (effectiveLimit > 0 && !rateLimiter.allow(routeId, effectiveLimit)) {
+            metricsRecorder.recordThrottle(routeId, policy != null ? policy.reason() : "default_limit");
             exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
             return exchange.getResponse().setComplete();
         }

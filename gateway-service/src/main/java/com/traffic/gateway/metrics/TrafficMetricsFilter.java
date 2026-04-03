@@ -17,16 +17,23 @@ import reactor.core.publisher.Mono;
 public class TrafficMetricsFilter implements GlobalFilter, Ordered {
 
     private final TrafficMetricPublisher publisher;
+    private final GatewayMetricsRecorder metricsRecorder;
 
-    public TrafficMetricsFilter(TrafficMetricPublisher publisher) {
+    public TrafficMetricsFilter(TrafficMetricPublisher publisher,
+                                GatewayMetricsRecorder metricsRecorder) {
         this.publisher = publisher;
+        this.metricsRecorder = metricsRecorder;
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
         long startNanos = System.nanoTime();
         return chain.filter(exchange)
-                .doFinally(signalType -> publisher.publish(buildEvent(exchange, startNanos)));
+                .doFinally(signalType -> {
+                    TrafficMetricEvent event = buildEvent(exchange, startNanos);
+                    metricsRecorder.recordRequest(event);
+                    publisher.publish(event);
+                });
     }
 
     @Override

@@ -9,6 +9,11 @@ import org.springframework.stereotype.Component;
 public class ActivePolicyStore {
 
     private final Map<String, ActiveRateLimitPolicy> policies = new ConcurrentHashMap<>();
+    private final GatewayPolicyMetricsRecorder metricsRecorder;
+
+    public ActivePolicyStore(GatewayPolicyMetricsRecorder metricsRecorder) {
+        this.metricsRecorder = metricsRecorder;
+    }
 
     public void upsert(TrafficDecisionEvent event) {
         if (!"RATE_LIMIT".equalsIgnoreCase(event.policyType()) || event.rateLimitRps() == null) {
@@ -17,6 +22,7 @@ public class ActivePolicyStore {
 
         long expiresAt = Instant.now().getEpochSecond() + event.ttlSec();
         policies.put(event.route(), new ActiveRateLimitPolicy(event.rateLimitRps(), expiresAt, event.reason()));
+        metricsRecorder.updateActivePolicies(policies.size());
     }
 
     public ActiveRateLimitPolicy get(String route) {
@@ -28,6 +34,7 @@ public class ActivePolicyStore {
         long now = Instant.now().getEpochSecond();
         if (policy.isExpired(now)) {
             policies.remove(route);
+            metricsRecorder.updateActivePolicies(policies.size());
             return null;
         }
         return policy;

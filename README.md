@@ -114,3 +114,15 @@ Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md
 
 - Part 1 completed: ML service now supports aggregate-based prediction and an optional Kafka pipeline from `aggregated_features` to `ml_predictions`
 - Part 2 completed: decision-engine converts predictions into traffic policies and gateway enforces active route rate limits from `traffic_decisions`
+
+## Phase 4 Breakdown
+
+- Part 1: observability instrumentation
+  - add service-level metrics for traffic, aggregation, predictions, decisions, and throttling
+  - expose those metrics through Prometheus-compatible endpoints
+- Part 2: dashboarding
+  - build Grafana dashboards for traffic flow, prediction quality, decisions, and gateway enforcement
+
+## Phase 4 Status
+
+- Part 1 completed: business-level metrics are now exposed across gateway-service, feature-service, decision-engine, and ml-service

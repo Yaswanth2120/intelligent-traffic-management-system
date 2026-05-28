@@ -1,0 +1,11 @@
+apiVersion: 1
+
+providers:
+  - name: traffic-platform-dashboards
+    orgId: 1
+    folder: Traffic Platform
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards

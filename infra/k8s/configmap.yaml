@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traffic-platform-config
+  namespace: traffic-platform
+data:
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  POSTGRES_URL: jdbc:postgresql://postgres:5432/traffic_platform
+  POSTGRES_USER: traffic_user
+  POSTGRES_PASSWORD: traffic_pass
+  ENABLE_KAFKA_PIPELINE: "true"
+  KAFKA_AGGREGATED_FEATURES_TOPIC: aggregated_features
+  KAFKA_ML_PREDICTIONS_TOPIC: ml_predictions

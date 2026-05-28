@@ -126,3 +126,30 @@ Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md
 ## Phase 4 Status
 
 - Part 1 completed: business-level metrics are now exposed across gateway-service, feature-service, decision-engine, and ml-service
+- Part 2 completed: Grafana is provisioned with a Prometheus datasource and a prebuilt traffic platform overview dashboard
+
+## Phase 5 Breakdown
+
+- Part 1: integration validation
+  - add CI coverage for Java services, ML service, and infrastructure assets
+  - document end-to-end validation flow across the event pipeline
+- Part 2: load and resilience
+  - add k6 load scenarios
+  - add chaos drill scripts and outage runbooks
+
+## Phase 5 Status
+
+- Part 1 completed: repository validation now covers Java services, ML service, dashboards, and Kubernetes assets
+- Part 2 completed: load-test scenarios and chaos drill scripts are included for spike and outage exercises
+
+## Phase 6 Breakdown
+
+- Part 1: Kubernetes baseline
+  - add namespace, shared configuration, service deployments, and services
+- Part 2: autoscaling and runtime policies
+  - add Horizontal Pod Autoscalers and runtime resource baselines for the core services
+
+## Phase 6 Status
+
+- Part 1 completed: Kubernetes manifests now exist for gateway-service, feature-service, decision-engine, ml-service, and shared configuration
+- Part 2 completed: baseline HPA autoscaling rules and runtime resource envelopes are defined for all core services

@@ -1,0 +1,44 @@
+name: Platform Validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  java-services:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Run Java service tests
+        run: mvn -q -pl gateway-service,feature-service,decision-engine test
+
+  ml-service:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ML dependencies
+        run: pip install -r ml-service/requirements.txt
+      - name: Run ML smoke tests
+        run: |
+          python -m py_compile ml-service/app/__init__.py ml-service/app/models.py ml-service/app/metrics.py ml-service/app/predictor.py ml-service/app/kafka_pipeline.py ml-service/app/main.py ml-service/test_predictor.py
+          PYTHONPATH=ml-service pytest -q ml-service/test_predictor.py
+
+  manifests-and-dashboards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: Validate dashboard JSON and YAML assets
+        run: |
+          python -m json.tool infra/docker/grafana/dashboards/traffic-platform-overview.json >/dev/null
+          ruby -e "require 'yaml'; YAML.load_file('infra/docker/docker-compose.yml'); YAML.load_file('infra/docker/grafana/provisioning/datasources/prometheus.yml'); YAML.load_file('infra/docker/grafana/provisioning/dashboards/dashboards.yml')"
+          ruby -e "require 'yaml'; Dir['infra/k8s/**/*.y*ml'].sort.each { |f| YAML.load_stream(File.read(f)) }"

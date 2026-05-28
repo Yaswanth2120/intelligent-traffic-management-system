@@ -3,6 +3,16 @@ spring:
     name: feature-service
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.traffic.feature.model
+        spring.json.value.default.type: com.traffic.feature.model.TrafficMetricEvent
+        spring.json.use.type.headers: false
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/traffic_platform}
     username: ${POSTGRES_USER:traffic_user}

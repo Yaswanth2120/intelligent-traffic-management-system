@@ -1,0 +1,22 @@
+{
+  "active_model": "baseline-v2-aggregate",
+  "rollback_model": "baseline-v1",
+  "models": [
+    {
+      "version": "baseline-v1",
+      "status": "archived",
+      "prediction_horizon_sec": 60,
+      "min_validation_accuracy": 0.7,
+      "max_mape": 0.35,
+      "notes": "Initial heuristic model for legacy feature input."
+    },
+    {
+      "version": "baseline-v2-aggregate",
+      "status": "active",
+      "prediction_horizon_sec": 60,
+      "min_validation_accuracy": 0.78,
+      "max_mape": 0.28,
+      "notes": "Aggregate-aware heuristic model used by the Kafka inference pipeline."
+    }
+  ]
+}

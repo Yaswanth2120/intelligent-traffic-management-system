@@ -1,11 +1,13 @@
 package com.traffic.decision.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public record TrafficDecisionEvent(
         String route,
-        long decisionTime,
-        String policyType,
-        Integer rateLimitRps,
+        @JsonProperty("decision_time") long decisionTime,
+        @JsonProperty("policy_type") String policyType,
+        @JsonProperty("rate_limit_rps") Integer rateLimitRps,
         String reason,
-        int ttlSec
+        @JsonProperty("ttl_sec") int ttlSec
 ) {
 }

@@ -29,6 +29,7 @@ jobs:
         run: |
           python -m py_compile ml-service/app/__init__.py ml-service/app/models.py ml-service/app/metrics.py ml-service/app/predictor.py ml-service/app/kafka_pipeline.py ml-service/app/main.py ml-service/test_predictor.py
           PYTHONPATH=ml-service pytest -q ml-service/test_predictor.py
+          python ml-service/scripts/validate_model_registry.py
 
   manifests-and-dashboards:
     runs-on: ubuntu-latest
@@ -40,5 +41,6 @@ jobs:
       - name: Validate dashboard JSON and YAML assets
         run: |
           python -m json.tool infra/docker/grafana/dashboards/traffic-platform-overview.json >/dev/null
+          python -m json.tool ml-service/model-registry.json >/dev/null
           ruby -e "require 'yaml'; YAML.load_file('infra/docker/docker-compose.yml'); YAML.load_file('infra/docker/grafana/provisioning/datasources/prometheus.yml'); YAML.load_file('infra/docker/grafana/provisioning/dashboards/dashboards.yml')"
           ruby -e "require 'yaml'; Dir['infra/k8s/**/*.y*ml'].sort.each { |f| YAML.load_stream(File.read(f)) }"

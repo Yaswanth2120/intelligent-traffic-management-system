@@ -153,3 +153,19 @@ Use [docs/architecture.md](/Users/yaswanth/Desktop/Project1/docs/architecture.md
 
 - Part 1 completed: Kubernetes manifests now exist for gateway-service, feature-service, decision-engine, ml-service, and shared configuration
 - Part 2 completed: baseline HPA autoscaling rules and runtime resource envelopes are defined for all core services
+
+## Phase 7 Breakdown
+
+- Part 1: CI/CD hardening
+  - add container build definitions
+  - publish service images through GitHub Actions
+  - validate release assets in CI
+- Part 2: model lifecycle
+  - add a model registry
+  - define promotion, rollback, and validation rules
+  - validate model metadata in CI
+
+## Phase 7 Status
+
+- Part 1 completed: Dockerfiles and a container publish workflow are included for all runtime services
+- Part 2 completed: ML model registry, lifecycle documentation, and registry validation script are included

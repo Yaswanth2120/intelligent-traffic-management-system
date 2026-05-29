@@ -1,6 +1,8 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 COPY pom.xml .
+COPY gateway-service/pom.xml gateway-service/pom.xml
+COPY feature-service/pom.xml feature-service/pom.xml
 COPY decision-engine/pom.xml decision-engine/pom.xml
 COPY decision-engine/src decision-engine/src
 RUN mvn -q -pl decision-engine -DskipTests package

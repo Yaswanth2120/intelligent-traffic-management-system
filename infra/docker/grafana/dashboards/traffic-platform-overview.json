@@ -433,6 +433,71 @@
       ],
       "title": "Storage Operation Results",
       "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "none",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "red",
+                "value": 0.85
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "decision_scaling_pressure_ratio",
+          "legendFormat": "{{route}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Forecast Scaling Pressure (predicted RPS / capacity) -- drives KEDA gateway-service scaling",
+      "description": "Exported by decision-engine as decision_scaling_pressure_ratio. >=0.85 is the same threshold DecisionPolicyService uses to emit a SCALE_SIGNAL decision. KEDA's gateway-service-forecast ScaledObject polls max(decision_scaling_pressure_ratio) from this same Prometheus instance (see infra/k8s/keda-scaledobject.yaml, docs/autoscaling.md) with threshold 0.5 (yellow) driving replica count up.",
+      "type": "timeseries"
     }
   ],
   "refresh": "10s",

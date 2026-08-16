@@ -18,18 +18,36 @@ spec:
       containers:
         - name: feature-service
           image: ghcr.io/yaswanth2120/intelligent-traffic-management-system/feature-service:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8081
           envFrom:
             - configMapRef:
                 name: traffic-platform-config
+            - secretRef:
+                name: traffic-platform-secrets
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: 8081}
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8081}
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
           resources:
+            # See infra/k8s/gateway-service.yaml -- same right-sizing for the
+            # same reason (observed usage ~50-320Mi on this constrained
+            # local cluster).
             requests:
-              cpu: 200m
-              memory: 384Mi
+              cpu: 150m
+              memory: 256Mi
             limits:
               cpu: 500m
-              memory: 768Mi
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service

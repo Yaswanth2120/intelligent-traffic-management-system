@@ -13,6 +13,18 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        # KafkaProducer.send() blocks the CALLING thread for up to
+        # max.block.ms (default 60000) when it can't get topic metadata --
+        # e.g. the broker is down. TrafficMetricsFilter calls publish() from
+        # a WebFlux reactor-netty event-loop thread, and that pool is tiny,
+        # so one blocked send() stalls unrelated concurrent requests too.
+        # Chaos testing (docs/chaos-testing.md) measured ~80% gateway
+        # request failure and ~4s average latency during a Kafka outage
+        # before this was set, directly contradicting docs/architecture.md's
+        # "gateway buffers minimally and drops metrics before impacting
+        # request path". A short bound makes publish() fail fast instead.
+        max.block.ms: 2000
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer

@@ -1,0 +1,46 @@
+# Representative successful run of tests/e2e/run-local-e2e.sh
+# Captured 2026-08-16, macOS/arm64, Docker Desktop 29.4.1.
+# Command: bash tests/e2e/run-local-e2e.sh
+# Exit code: 0
+#
+# See docs/testing.md for what this script proves, and for the two real
+# defects this run uncovered and fixed along the way (Spring Boot jar
+# repackaging, and confluentinc/cp-kafka's broken arm64 image).
+
+time="2026-08-16T12:43:54-05:00" level=warning msg="/Users/yaswanth/Desktop/intelligent-traffic-management-system/infra/docker/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+ Network traffic-platform-e2e_default Creating
+ Network traffic-platform-e2e_default Created
+ Container traffic-platform-e2e-grafana-1 Creating
+ Container traffic-platform-e2e-prometheus-1 Creating
+ Container traffic-platform-e2e-kafka-1 Creating
+ Container traffic-platform-e2e-postgres-1 Creating
+ Container traffic-platform-e2e-redis-1 Creating
+ Container traffic-platform-e2e-grafana-1 Created
+ Container traffic-platform-e2e-prometheus-1 Created
+ Container traffic-platform-e2e-redis-1 Created
+ Container traffic-platform-e2e-postgres-1 Created
+ Container traffic-platform-e2e-kafka-1 Created
+ Container traffic-platform-e2e-prometheus-1 Starting
+ Container traffic-platform-e2e-grafana-1 Starting
+ Container traffic-platform-e2e-redis-1 Starting
+ Container traffic-platform-e2e-postgres-1 Starting
+ Container traffic-platform-e2e-kafka-1 Starting
+ Container traffic-platform-e2e-postgres-1 Started
+ Container traffic-platform-e2e-kafka-1 Started
+ Container traffic-platform-e2e-prometheus-1 Started
+ Container traffic-platform-e2e-grafana-1 Started
+ Container traffic-platform-e2e-redis-1 Started
+kafka port is ready
+redis port is ready
+postgres port is ready
+
+[notice] A new release of pip is available: 26.1.2 -> 26.2.1
+[notice] To update, run: /Users/yaswanth/Desktop/intelligent-traffic-management-system/target/e2e-logs/venv/bin/python3.14 -m pip install --upgrade pip
+gateway-service is ready
+feature-service is ready
+decision-engine is ready
+ml-service is ready
+prometheus is ready
+grafana is ready
+E2E smoke test passed
+/Users/yaswanth/Desktop/intelligent-traffic-management-system/tests/e2e/run-local-e2e.sh: line 15: 55242 Terminated: 15          ENABLE_KAFKA_PIPELINE=true KAFKA_BOOTSTRAP_SERVERS="localhost:${KAFKA_HOST_PORT}" "${LOG_DIR}/venv/bin/uvicorn" app.main:app --app-dir ml-service --host 0.0.0.0 --port 8000 > "${LOG_DIR}/ml.log" 2>&1

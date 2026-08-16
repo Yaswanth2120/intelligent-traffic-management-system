@@ -1,23 +1,9 @@
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: gateway-service
-  namespace: traffic-platform
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: gateway-service
-  minReplicas: 2
-  maxReplicas: 8
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: 65
----
+# gateway-service is scaled by KEDA off the decision engine's forecast-driven
+# decision_scaling_pressure_ratio metric instead of a plain CPU HPA -- see
+# infra/k8s/keda-scaledobject.yaml and docs/autoscaling.md. A Deployment can
+# only be targeted by one HPA at a time (KEDA creates its own
+# keda-hpa-gateway-service-forecast HPA under the hood), so no native HPA is
+# defined for gateway-service here.
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -28,8 +14,15 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: feature-service
-  minReplicas: 2
-  maxReplicas: 6
+  minReplicas: 1
+  # Capped at 2 (was 6): this single-node local kind cluster has ~3.9GiB
+  # allocatable, and feature-service/decision-engine/ml-service all scaling
+  # out simultaneously alongside gateway-service's KEDA-driven replicas
+  # exhausted node memory during the docs/autoscaling.md experiment,
+  # producing a resource-contention cascade (CrashLoopBackOff across
+  # multiple deployments, including Prometheus itself). A managed/larger
+  # cluster would not need this cap.
+  maxReplicas: 2
   metrics:
     - type: Resource
       resource:
@@ -48,8 +41,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: decision-engine
-  minReplicas: 2
-  maxReplicas: 6
+  minReplicas: 1
+  maxReplicas: 2 # see feature-service HPA above for why
   metrics:
     - type: Resource
       resource:
@@ -68,8 +61,8 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: ml-service
-  minReplicas: 2
-  maxReplicas: 6
+  minReplicas: 1
+  maxReplicas: 2 # see feature-service HPA above for why
   metrics:
     - type: Resource
       resource:

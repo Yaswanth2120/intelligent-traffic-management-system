@@ -18,11 +18,18 @@ spec:
       containers:
         - name: ml-service
           image: ghcr.io/yaswanth2120/intelligent-traffic-management-system/ml-service:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           envFrom:
             - configMapRef:
                 name: traffic-platform-config
+            - secretRef:
+                name: traffic-platform-secrets
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
           resources:
             requests:
               cpu: 150m

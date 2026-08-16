@@ -1,27 +1,27 @@
 version: "3.9"
 
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.1
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    ports:
-      - "${ZOOKEEPER_HOST_PORT:-2181}:2181"
-
+  # Single-node KRaft broker (apache/kafka), not confluentinc/cp-kafka +
+  # zookeeper: the Confluent image's arm64 variant ships a broken "dub"
+  # helper binary ("cannot execute binary file: Exec format error") on
+  # Apple Silicon Docker Desktop as of this writing, which makes it fail to
+  # start at all -- see docs/testing.md "known gaps this suite found". KRaft
+  # also means no separate zookeeper service is needed.
   kafka:
-    image: confluentinc/cp-kafka:7.6.1
-    depends_on:
-      - zookeeper
+    image: apache/kafka:3.7.1
     ports:
       - "${KAFKA_HOST_PORT:-9092}:9092"
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_HOST_PORT:-9092}
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
 
   redis:
     image: redis:7.2

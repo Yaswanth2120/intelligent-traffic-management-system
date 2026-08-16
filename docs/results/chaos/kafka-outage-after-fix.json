@@ -1,0 +1,20 @@
+{
+  "run_id": "kafka-outage-20260816T182727Z",
+  "scenario": "kafka_outage",
+  "outage_start_iso": "2026-08-16T18:27:28Z",
+  "outage_requested_duration_sec": 20,
+  "outage_actual_duration_sec": 310,
+  "kafka_broker_restore_ms": 457,
+  "pipeline_settle_sec_after_restore": 15,
+  "during_outage_traffic": {"total":20,"success":20,"error":0,"avg_latency_ms":181.9},
+  "post_recovery_traffic": {"total":5,"success":5,"error":0,"avg_latency_ms":58.2},
+  "gateway_metric_publish_failures_during_outage": 20,
+  "gateway_stayed_available": true,
+  "traffic_history_rows_before_outage": 0,
+  "traffic_history_rows_added": 5,
+  "traffic_history_rows_expected": 25,
+  "pipeline_recovery_sec": 31,
+  "data_loss": "partial (expected, by design) -- 20 of 20 during-outage requests' metrics were dropped (docs/architecture.md: 'drops metrics before impacting request path'); all 5 post-recovery requests landed (traffic_history grew by 5 rows for 25 requests)",
+  "manual_intervention_required": "no",
+  "unexpected_failure": false
+}

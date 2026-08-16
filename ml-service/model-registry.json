@@ -1,6 +1,6 @@
 {
-  "active_model": "baseline-v2-aggregate",
-  "rollback_model": "baseline-v1",
+  "active_model": "holt-winters-v1",
+  "rollback_model": "baseline-v2-aggregate",
   "models": [
     {
       "version": "baseline-v1",
@@ -12,11 +12,19 @@
     },
     {
       "version": "baseline-v2-aggregate",
-      "status": "active",
+      "status": "rollback",
       "prediction_horizon_sec": 60,
       "min_validation_accuracy": 0.78,
       "max_mape": 0.28,
-      "notes": "Aggregate-aware heuristic model used by the Kafka inference pipeline."
+      "notes": "Aggregate-aware heuristic model. Still used automatically as the live fallback for routes without enough history for the seasonal model (see docs/forecasting.md)."
+    },
+    {
+      "version": "holt-winters-v1",
+      "status": "active",
+      "prediction_horizon_sec": 60,
+      "min_validation_accuracy": 0.85,
+      "max_mape": 0.13,
+      "notes": "Additive Holt-Winters seasonal forecaster, evaluated MAE=28.63 RMSE=41.43 MAPE=12.15% on the synthetic held-out set (see docs/forecasting.md), roughly halving baseline-v2-aggregate's error. Falls back to baseline-v2-aggregate per-route until 2 full seasons (48h) of history accumulate."
     }
   ]
 }

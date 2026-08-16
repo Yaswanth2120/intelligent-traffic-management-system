@@ -117,8 +117,32 @@ Decision contract:
 
 - If `predicted_rps > service_capacity_rps`, reduce route limit to safe operating range.
 - If `p95_latency_ms > sla_p95_ms`, shift traffic to backup instances or shed non-critical requests.
-- If `spike_probability >= 0.80`, pre-scale gateway or backend workers.
+- If `spike_probability >= 0.80`, pre-scale gateway or backend workers — implemented for
+  real via KEDA, see "Autoscaling" below (this used to be aspirational; it is now a
+  measured, working feedback loop).
 - If ML inference is unavailable, revert to static emergency policy.
+
+## Autoscaling
+
+The decision engine's capacity-pressure ratio (`predictedRps / serviceCapacityRps`,
+the same ratio behind the `SCALE_SIGNAL` rule above) is exported as a Prometheus
+gauge, `decision_scaling_pressure_ratio`, and drives real Kubernetes replica counts
+for `gateway-service` through a KEDA `ScaledObject` (not a native HPA, not
+Prometheus Adapter — see `docs/autoscaling.md` for why KEDA was chosen for this
+local environment):
+
+```
+traffic_metrics -> feature-service -> aggregated_features -> ml-service forecast
+  -> ml_predictions -> decision-engine -> decision_scaling_pressure_ratio (Prometheus)
+    -> KEDA ScaledObject -> keda-hpa-gateway-service-forecast -> gateway-service replicas
+```
+
+Measured on the local `kind` cluster: a k6-driven spike raised the ratio from
+0.03 to 0.76, which KEDA turned into a 3 -> 5 -> 8 replica scale-up (capped at
+`maxReplicaCount: 8`); once load subsided, `cooldownPeriod` +
+`scaleDown.stabilizationWindowSeconds` brought it back down to the `minReplicaCount`
+floor of 3 without flapping. Full timeline, thresholds, and the bugs this
+surfaced (and fixed) are in `docs/autoscaling.md`.
 
 ## Storage Strategy
 

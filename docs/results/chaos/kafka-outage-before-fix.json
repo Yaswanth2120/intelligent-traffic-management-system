@@ -1,0 +1,17 @@
+{
+  "run_id": "kafka-outage-20260816T175844Z",
+  "scenario": "kafka_outage",
+  "outage_start_iso": "2026-08-16T17:58:45Z",
+  "outage_requested_duration_sec": 20,
+  "outage_actual_duration_sec": 104,
+  "kafka_broker_restore_ms": 547,
+  "pipeline_settle_sec_after_restore": 15,
+  "during_outage_traffic": {"total":20,"success":4,"error":16,"avg_latency_ms":4072.4},
+  "post_recovery_traffic": {"total":5,"success":5,"error":0,"avg_latency_ms":51.6},
+  "gateway_metric_publish_failures_during_outage": 4,
+  "gateway_stayed_available": false,
+  "traffic_history_rows_since_outage_start": "21",
+  "data_loss": "no (traffic_history rows exist for the outage window: 21)",
+  "manual_intervention_required": "no",
+  "unexpected_failure": true
+}

@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traffic-platform
+  namespace: traffic-platform
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: traffic-platform.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: {service: {name: gateway-service, port: {number: 8080}}}

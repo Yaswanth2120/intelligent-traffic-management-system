@@ -18,18 +18,38 @@ spec:
       containers:
         - name: gateway-service
           image: ghcr.io/yaswanth2120/intelligent-traffic-management-system/gateway-service:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           envFrom:
             - configMapRef:
                 name: traffic-platform-config
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: 8080}
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8080}
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
           resources:
+            # Right-sized from observed usage (~200-300Mi RSS under load) for
+            # this local single-node kind cluster, which has only ~3.8GiB
+            # allocatable -- see docs/autoscaling.md "resource constraints"
+            # for the crash-loop this fixed (default 1s probe timeouts plus
+            # 384Mi*3 replica requests pushed node memory requests to 97%,
+            # causing scheduling failures and liveness-probe-triggered
+            # restarts under load).
             requests:
-              cpu: 200m
-              memory: 384Mi
+              cpu: 150m
+              memory: 256Mi
             limits:
               cpu: 500m
-              memory: 768Mi
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service

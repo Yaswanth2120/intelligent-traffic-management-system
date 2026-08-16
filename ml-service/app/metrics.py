@@ -36,3 +36,9 @@ kafka_prediction_publish_total = Counter(
     "Kafka prediction publish attempts from the ML service",
     ["result"],
 )
+
+forecast_model_selection_total = Counter(
+    "ml_forecast_model_selection_total",
+    "Which prediction path served a request: the Holt-Winters model or the heuristic fallback",
+    ["route", "model"],
+)

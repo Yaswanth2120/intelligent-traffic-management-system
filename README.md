@@ -340,7 +340,8 @@ Kubernetes manifests are included for:
 - Decision engine deployment and service
 - ML service deployment and service
 - Resource requests and limits
-- Horizontal Pod Autoscalers
+- Horizontal Pod Autoscalers (CPU-based for feature-service/decision-engine/ml-service)
+- A KEDA `ScaledObject` for gateway-service, driven by a real forecast metric
 
 Files are located in:
 
@@ -348,16 +349,68 @@ Files are located in:
 infra/k8s/
 ```
 
+## Live / Deployment Demo
+
+The full platform has been validated on a **local kind cluster only**; it is
+not a public deployment. Run `make k8s-up`, `make k8s-status`, and
+`make k8s-down` to reproduce the deployment. The workflow builds local images,
+deploys Kafka/Redis/Postgres/Prometheus/Grafana plus all application services,
+and installs both CPU-based Kubernetes HPA (feature-service/decision-engine/
+ml-service) and a KEDA-managed HPA for gateway-service. Full instructions and
+cloud handoff requirements are in [docs/deployment.md](docs/deployment.md);
+measured local evidence is in `docs/results/deployment/`.
+
+## Autoscaling (KEDA)
+
+The decision engine's forecast capacity-pressure ratio
+(`decision_scaling_pressure_ratio` = predicted RPS / configured capacity) is
+exported to Prometheus and drives `gateway-service`'s replica count through a
+real KEDA `ScaledObject` — not a native HPA, and not Prometheus Adapter (this
+task's environment explicitly called for KEDA on local kind/k3d/k3s; see
+[docs/autoscaling.md](docs/autoscaling.md) for why).
+
+Measured on the local `kind` cluster (2026-08-16), driving `tests/load/k6`'s
+spike profile as an in-cluster Job:
+
+| Phase | `decision_scaling_pressure_ratio` | gateway-service replicas |
+|---|---:|---:|
+| Normal load | 0.03 | 3 (floor) |
+| Spike peak | 0.76 | 3 -> 5 -> 8 (cap) |
+| Load subsides + cooldown/stabilization | 0.0 | 8 -> 4 -> 3 (floor) |
+
+Full timeline, the two real bugs this surfaced and fixed (a silently-dead
+ml-service Kafka pipeline, and a KEDA metric-type misconfiguration that
+divided the signal by replica count), and reproduction commands are in
+[docs/autoscaling.md](docs/autoscaling.md); raw evidence is in
+`docs/results/autoscaling/`.
+
 ## Load Testing
 
-k6 scenarios are included:
+k6 performance profiles are repeatable against both the gateway and the
+direct ML prediction endpoint:
 
 ```text
-tests/load/k6/steady-state.js
-tests/load/k6/spike-traffic.js
+tests/load/k6/performance.js
+tests/load/run-local.sh
+tests/load/Makefile
 ```
 
-These simulate normal traffic and spike traffic against the gateway route.
+The profiles cover baseline (30 RPS), sustained (150 RPS), and a 30 -> 300
+RPS spike. ML requests target `POST /predict/aggregate` directly and enforce
+the `docs/slo.md` thresholds (p95 <= 150ms, p99 <= 400ms, error rate <= 0.1%).
+Gateway results are recorded separately because no gateway latency/error SLO
+is defined in that document.
+
+Measured local results and machine context are in
+[`docs/load-testing.md`](docs/load-testing.md); sanitized raw summaries are in
+`docs/results/load/`. To reproduce, start the local stack and run, for
+example:
+
+```bash
+bash tests/chaos/scripts/start-stack.sh
+make -C tests/load sustained-ml
+bash tests/chaos/scripts/stop-stack.sh
+```
 
 ## Chaos Testing
 

@@ -6,10 +6,25 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        # See gateway-service/application.yml for why: KafkaProducer.send()
+        # blocks the calling thread for up to max.block.ms (default 60000)
+        # when the broker is unreachable. Here that thread is the
+        # @KafkaListener consumer thread, so an unbounded block would stall
+        # ALL traffic_metrics processing for this route (and every other
+        # route), not just the publish. A short bound fails fast instead.
+        max.block.ms: 2000
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      # Wrapped in ErrorHandlingDeserializer so a malformed/non-deserializable
+      # traffic_metrics message (a "poison pill") is logged and the offset is
+      # committed past it, instead of permanently stalling this consumer group
+      # on the same offset (the previous unwrapped JsonDeserializer would retry
+      # the same bad record forever, blocking ALL routes' processing behind it,
+      # not just the one that sent the bad event).
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
         spring.json.trusted.packages: com.traffic.feature.model
         spring.json.value.default.type: com.traffic.feature.model.TrafficMetricEvent
         spring.json.use.type.headers: false
@@ -21,6 +36,15 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
+      # Lettuce's default command timeout is 60s. Chaos testing
+      # (docs/chaos-testing.md) found that once the client has been through
+      # one reconnect cycle, commands issued during a SECOND Redis outage can
+      # sit queued waiting for reconnection instead of failing immediately --
+      # so TrafficMetricsConsumer's try/catch around the Redis write (which
+      # is meant to fail open per docs/architecture.md) only fires after a
+      # long stall instead of failing fast. A short bound restores "continues
+      # durable writes to PostgreSQL" as a fast path, not a 60s-delayed one.
+      timeout: 2000ms
 
 management:
   endpoints:

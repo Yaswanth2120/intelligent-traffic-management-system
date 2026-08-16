@@ -2,8 +2,8 @@
 
 ## Current Model
 
-- Active model: `baseline-v2-aggregate`
-- Rollback model: `baseline-v1`
+- Active model: `holt-winters-v1` (see `docs/forecasting.md` for methodology and evaluation results)
+- Rollback model: `baseline-v2-aggregate` — also used automatically, per-route, as the live fallback until a route accumulates enough history for the seasonal model
 - Registry file: `ml-service/model-registry.json`
 
 ## Promotion Rules

@@ -27,9 +27,27 @@ jobs:
         run: pip install -r ml-service/requirements.txt
       - name: Run ML smoke tests
         run: |
-          python -m py_compile ml-service/app/__init__.py ml-service/app/models.py ml-service/app/metrics.py ml-service/app/predictor.py ml-service/app/kafka_pipeline.py ml-service/app/main.py ml-service/test_predictor.py
-          PYTHONPATH=ml-service pytest -q ml-service/test_predictor.py
+          python -m py_compile ml-service/app/__init__.py ml-service/app/models.py ml-service/app/metrics.py ml-service/app/predictor.py ml-service/app/kafka_pipeline.py ml-service/app/forecasting.py ml-service/app/dataset.py ml-service/app/main.py ml-service/test_predictor.py ml-service/test_forecasting.py
+          PYTHONPATH=ml-service pytest -q ml-service/test_predictor.py ml-service/test_forecasting.py
           python ml-service/scripts/validate_model_registry.py
+          python ml-service/scripts/evaluate_forecast.py
+
+  # Heavier, Testcontainers-backed distributed pipeline tests: real Kafka,
+  # Redis, Postgres, and the real feature-service/decision-engine/ml-service
+  # Docker images (built from their production Dockerfiles), proving the full
+  # traffic_metrics -> ... -> traffic_decisions flow end to end. See
+  # docs/testing.md for what this proves and its known gaps. Kept in its own
+  # job/module so the fast unit-test jobs above never pay for it.
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Run Testcontainers pipeline integration tests
+        run: mvn -f integration-tests/pom.xml verify
 
   manifests-and-dashboards:
     runs-on: ubuntu-latest

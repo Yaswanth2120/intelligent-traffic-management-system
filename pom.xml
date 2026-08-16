@@ -8,6 +8,16 @@
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
+  <!--
+    integration-tests is intentionally NOT listed here. Every service Dockerfile
+    (feature-service/Dockerfile, decision-engine/Dockerfile, ...) COPYs this root
+    pom.xml plus only the specific sibling pom.xml files it needs into the Maven
+    reactor build inside the image; listing integration-tests as a module here
+    would break those builds (the reactor would expect integration-tests/pom.xml
+    to exist in the build context). integration-tests/pom.xml still declares
+    this pom as its <parent> for dependency/version management, and is built
+    standalone via `mvn -f integration-tests/pom.xml verify` (see docs/testing.md).
+  -->
   <modules>
     <module>gateway-service</module>
     <module>feature-service</module>
@@ -19,10 +29,18 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <spring.boot.version>3.3.2</spring.boot.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
   </properties>
 
   <dependencyManagement>
     <dependencies>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-dependencies</artifactId>
@@ -39,6 +57,23 @@
         <plugin>
           <groupId>org.springframework.boot</groupId>
           <artifactId>spring-boot-maven-plugin</artifactId>
+          <!--
+            Without an explicit execution binding, spring-boot-maven-plugin does NOT
+            repackage the jar into a runnable fat jar when a project doesn't inherit
+            from spring-boot-starter-parent (this project only imports the
+            spring-boot-dependencies BOM). Before this fix, `mvn package` on any
+            service produced a ~20KB plain jar with no Main-Class manifest entry,
+            so every service Dockerfile (`java -jar app.jar`) failed at container
+            startup with "no main manifest attribute, in app.jar": caught by
+            integration-tests/TrafficPipelineIT actually starting the containers.
+          -->
+          <executions>
+            <execution>
+              <goals>
+                <goal>repackage</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -47,6 +82,22 @@
           <configuration>
             <argLine>-Dnet.bytebuddy.experimental=true</argLine>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.2.5</version>
+          <configuration>
+            <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>integration-test</goal>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>

@@ -1,0 +1,64 @@
+# Closes the loop described in docs/autoscaling.md:
+#   incoming traffic -> traffic_metrics -> feature-service aggregate
+#     -> aggregated_features -> ml-service forecast -> ml_predictions
+#     -> decision-engine (DecisionPolicyService) -> decision_scaling_pressure_ratio
+#     -> Prometheus -> KEDA -> gateway-service replica count
+#
+# decision_scaling_pressure_ratio = predictedRps / serviceCapacityRps (see
+# DecisionPolicyService.java) -- the exact ratio DecisionPolicyService already
+# uses to decide whether to emit a SCALE_SIGNAL decision (>= 0.85). KEDA
+# polls it from Prometheus (not from decision-engine directly, and no
+# application code calls `kubectl scale`).
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: gateway-service-forecast
+  namespace: traffic-platform
+spec:
+  scaleTargetRef:
+    name: gateway-service
+  minReplicaCount: 3
+  maxReplicaCount: 8
+  pollingInterval: 15 # matches Prometheus's scrape_interval in infra/k8s/prometheus.yml
+  cooldownPeriod: 120 # wait this long after the metric last exceeded threshold before scaling toward min
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleUp:
+          # React quickly to a forecast spike: allow doubling every 30s, no
+          # stabilization delay.
+          stabilizationWindowSeconds: 0
+          policies:
+            - type: Percent
+              value: 100
+              periodSeconds: 30
+        scaleDown:
+          # Avoid flapping: only shed 50% of replicas per minute, and require
+          # 3 minutes of consistently-lower load before scaling down at all.
+          stabilizationWindowSeconds: 180
+          policies:
+            - type: Percent
+              value: 50
+              periodSeconds: 60
+  triggers:
+    - type: prometheus
+      # KEDA's Prometheus scaler defaults to the HPA "AverageValue" metric
+      # type, which divides the raw query result by the CURRENT replica
+      # count before comparing to threshold -- appropriate for a per-pod
+      # metric, but decision_scaling_pressure_ratio is already a global,
+      # aggregate ratio (not meant to be divided across replicas). Without
+      # this, threshold effectively became threshold*currentReplicas
+      # (measured: raw ratio 0.76 with 3 replicas showed as an HPA target of
+      # 0.254, never crossing threshold 0.5 no matter how high the real
+      # signal went). "Value" compares the raw query result directly.
+      metricType: Value
+      metadata:
+        serverAddress: http://prometheus.traffic-platform.svc.cluster.local:9090
+        query: max(decision_scaling_pressure_ratio)
+        # HPA computes desiredReplicas = ceil(currentReplicas *
+        # currentValue/threshold) each polling cycle. Measured run (see
+        # docs/autoscaling.md): ratio 0.76 against 3 replicas -> ceil(3 *
+        # 0.76/0.5) = 5 replicas; re-evaluated against the now-5 replicas on
+        # the next cycle -> ceil(5 * 0.76/0.5) = 8 (capped at maxReplicaCount).
+        threshold: "0.5"
+        activationThreshold: "0.1"

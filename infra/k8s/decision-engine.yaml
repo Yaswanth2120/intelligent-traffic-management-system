@@ -18,18 +18,35 @@ spec:
       containers:
         - name: decision-engine
           image: ghcr.io/yaswanth2120/intelligent-traffic-management-system/decision-engine:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
           envFrom:
             - configMapRef:
                 name: traffic-platform-config
+            - secretRef:
+                name: traffic-platform-secrets
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: 8082}
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8082}
+            initialDelaySeconds: 20
+            timeoutSeconds: 5
+            periodSeconds: 10
+            failureThreshold: 5
           resources:
+            # See infra/k8s/gateway-service.yaml -- same fix, same reason
+            # (docs/autoscaling.md "resource constraints").
             requests:
-              cpu: 200m
-              memory: 384Mi
+              cpu: 150m
+              memory: 256Mi
             limits:
               cpu: 500m
-              memory: 768Mi
+              memory: 512Mi
 ---
 apiVersion: v1
 kind: Service

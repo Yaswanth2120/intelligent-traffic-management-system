@@ -35,7 +35,7 @@ kubectl -n "${NAMESPACE}" create configmap postgres-init --from-file=init.sql=in
 kubectl -n "${NAMESPACE}" create configmap grafana-provisioning-datasources --from-file=datasources.yaml=infra/docker/grafana/provisioning/datasources/prometheus.yml --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "${NAMESPACE}" create configmap grafana-provisioning-dashboards --from-file=dashboards.yaml=infra/docker/grafana/provisioning/dashboards/dashboards.yml --dry-run=client -o yaml | kubectl apply -f -
 kubectl -n "${NAMESPACE}" create configmap grafana-dashboards --from-file=traffic-platform-overview.json=infra/docker/grafana/dashboards/traffic-platform-overview.json --dry-run=client -o yaml | kubectl apply -f -
-kubectl apply -f infra/k8s/configmap.yaml -f infra/k8s/platform-infra.yaml -f infra/k8s/gateway-service.yaml -f infra/k8s/feature-service.yaml -f infra/k8s/decision-engine.yaml -f infra/k8s/ml-service.yaml -f infra/k8s/autoscaling.yaml -f infra/k8s/monitoring.yaml -f infra/k8s/ingress.yaml
+kubectl apply -f infra/k8s/configmap.yaml -f infra/k8s/platform-infra.yaml -f infra/k8s/gateway-service.yaml -f infra/k8s/feature-service.yaml -f infra/k8s/decision-engine.yaml -f infra/k8s/ml-service.yaml -f infra/k8s/autoscaling.yaml -f infra/k8s/prometheus-rbac.yaml -f infra/k8s/monitoring.yaml -f infra/k8s/ingress.yaml
 for app in gateway-service feature-service decision-engine ml-service; do
   kubectl -n "${NAMESPACE}" set image "deployment/${app}" "${app}=traffic-platform/${app}:dev"
 done

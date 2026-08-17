@@ -7,14 +7,15 @@ spec:
   template:
     metadata: {labels: {app: prometheus}}
     spec:
+      serviceAccountName: prometheus
       containers:
         - name: prometheus
           image: prom/prometheus:v2.52.0
           args: [--config.file=/etc/prometheus/prometheus.yml]
           ports: [{containerPort: 9090}]
           volumeMounts: [{name: config, mountPath: /etc/prometheus}]
-          readinessProbe: {httpGet: {path: /-/ready, port: 9090}}
-          livenessProbe: {httpGet: {path: /-/healthy, port: 9090}}
+          readinessProbe: {httpGet: {path: /-/ready, port: 9090}, timeoutSeconds: 5, failureThreshold: 5}
+          livenessProbe: {httpGet: {path: /-/healthy, port: 9090}, timeoutSeconds: 5, failureThreshold: 5}
       volumes: [{name: config, configMap: {name: prometheus-config}}]
 ---
 apiVersion: v1
@@ -40,8 +41,8 @@ spec:
             - {name: datasources, mountPath: /etc/grafana/provisioning/datasources}
             - {name: dashboard-provider, mountPath: /etc/grafana/provisioning/dashboards}
             - {name: dashboards, mountPath: /var/lib/grafana/dashboards}
-          readinessProbe: {httpGet: {path: /api/health, port: 3000}}
-          livenessProbe: {httpGet: {path: /api/health, port: 3000}}
+          readinessProbe: {httpGet: {path: /api/health, port: 3000}, timeoutSeconds: 5, failureThreshold: 5}
+          livenessProbe: {httpGet: {path: /api/health, port: 3000}, timeoutSeconds: 5, failureThreshold: 5}
       volumes:
         - {name: datasources, configMap: {name: grafana-provisioning-datasources}}
         - {name: dashboard-provider, configMap: {name: grafana-provisioning-dashboards}}

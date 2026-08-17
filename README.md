@@ -1,5 +1,7 @@
 # Intelligent Traffic Management System
 
+[![Platform Validation](https://github.com/Yaswanth2120/intelligent-traffic-management-system/actions/workflows/platform-validation.yml/badge.svg)](https://github.com/Yaswanth2120/intelligent-traffic-management-system/actions/workflows/platform-validation.yml)
+
 A cloud-native distributed platform that predicts API traffic, detects spikes, and dynamically adjusts traffic policies to protect backend services, reduce infrastructure waste, and maintain low latency.
 
 The system combines API gateway telemetry, Kafka event streaming, rolling feature aggregation, machine learning inference, rule-based traffic decisions, and observability dashboards.
@@ -157,7 +159,7 @@ traffic_decisions
 
 - Python
 - FastAPI
-- Baseline traffic prediction logic
+- Holt-Winters (triple exponential smoothing) traffic forecasting, pure Python
 - Pydantic
 - aiokafka
 - Prometheus instrumentation
@@ -360,6 +362,20 @@ ml-service) and a KEDA-managed HPA for gateway-service. Full instructions and
 cloud handoff requirements are in [docs/deployment.md](docs/deployment.md);
 measured local evidence is in `docs/results/deployment/`.
 
+Live Grafana dashboard, captured against the running `kind` cluster while
+generating real gateway traffic (2026-08-16) — every panel below is a real
+Prometheus query result, not a mock:
+
+![Grafana dashboard showing real traffic, prediction, and policy metrics](docs/results/screenshots/grafana-dashboard.png)
+
+Capturing this screenshot surfaced and fixed a real bug: the dashboard JSON
+hardcodes `datasource.uid: "prometheus"` on every panel, but the datasource
+provisioning YAML never set an explicit `uid`, so Grafana assigned a random
+one and every panel silently failed with "Datasource prometheus was not
+found." Fixed in
+[infra/docker/grafana/provisioning/datasources/prometheus.yml](infra/docker/grafana/provisioning/datasources/prometheus.yml)
+by pinning `uid: prometheus`.
+
 ## Autoscaling (KEDA)
 
 The decision engine's forecast capacity-pressure ratio
@@ -439,7 +455,21 @@ Model lifecycle documentation is in:
 ml-service/model_lifecycle.md
 ```
 
-The current baseline model produces:
+Traffic prediction (`ml-service/app/forecasting.py`) is a from-scratch
+Holt-Winters (additive triple exponential smoothing) model, fit per route on
+a rolling history buffer once enough seasonal history is available; new
+routes fall back to a simpler heuristic until they accumulate history. On a
+held-out chronological split of a 60-day synthetic series (seed=42, 1,152
+train / 288 test hourly points), Holt-Winters roughly halves the old
+heuristic's error:
+
+| Model | MAE | RMSE | MAPE |
+|---|---|---|---|
+| Heuristic baseline (`baseline-v2-aggregate`) | 65.79 | 82.86 | 25.15% |
+| Holt-Winters (`holt-winters-v1`) | 28.63 | 41.43 | 12.15% |
+
+Full methodology, dataset construction, and reproduction command are in
+[docs/forecasting.md](docs/forecasting.md). Each prediction response includes:
 
 - Predicted RPS
 - Spike probability
@@ -458,29 +488,55 @@ This project was completed in multiple phases:
 - Phase 6: Kubernetes manifests, resource policies, autoscaling.
 - Phase 7: Dockerfiles, GHCR publishing, model registry, lifecycle validation, E2E harness.
 
-## Current Status
+## What's Actually Validated
 
-Completed:
+Every claim below links to a doc with real, measured output from this
+machine/cluster — not aspirational description. Test counts:
+[gateway](gateway-service/src/test/java) 2,
+[feature-service](feature-service/src/test/java) 2,
+[decision-engine](decision-engine/src/test/java) 3 (JUnit `@Test` methods),
+[ml-service](ml-service/test_predictor.py) 17 (pytest, covering the
+predictor, the Holt-Winters fallback path, and forecasting edge cases), plus
+6 [Testcontainers integration tests](integration-tests/src/test/java/com/traffic/integration/TrafficPipelineIT.java)
+that run the real Kafka -> feature-service -> Redis/Postgres -> Kafka ->
+ml-service -> Kafka -> decision-engine pipeline end to end against actual
+containers (not mocks).
 
-- Core distributed traffic management platform.
-- Local Docker infrastructure.
-- Java and Python services.
-- Kafka event pipeline.
-- ML prediction and decision loop.
-- Observability dashboard assets.
-- CI/CD validation.
-- Container publishing workflow.
-- Kubernetes deployment assets.
-- Load and chaos testing assets.
+- **Forecasting**: real Holt-Winters model, evaluated against a heuristic
+  baseline with honest MAE/RMSE/MAPE on held-out data —
+  [docs/forecasting.md](docs/forecasting.md).
+- **Distributed pipeline**: Testcontainers integration tests exercising the
+  full event chain with real infrastructure and the real ML service —
+  [docs/testing.md](docs/testing.md).
+- **Chaos testing**: Kafka/Redis outage scripts run against a live stack,
+  with captured error rate, latency, and recovery-time numbers, and two real
+  bugs found and fixed as a result — [docs/chaos-testing.md](docs/chaos-testing.md).
+- **Load testing**: k6 profiles (baseline/sustained/spike) run against both
+  the gateway and the ML service directly, evaluated against
+  [docs/slo.md](docs/slo.md) — [docs/load-testing.md](docs/load-testing.md).
+- **Autoscaling**: a real KEDA `ScaledObject` driving `gateway-service`
+  replicas from a live forecast-pressure metric, with a measured 3 -> 8 -> 3
+  replica timeline from an actual spike load test —
+  [docs/autoscaling.md](docs/autoscaling.md).
+- **Deployment**: full stack (all services, Kafka, Redis, Postgres,
+  Prometheus, Grafana) deployed and exercised on a local `kind` cluster —
+  [docs/deployment.md](docs/deployment.md).
 
-Latest GitHub checks are passing after fixing the Java Docker image builds.
+This is a solo local-environment project: everything above was run on one
+machine / one `kind` cluster, not a managed or production deployment. See
+"Live / Deployment Demo" above for what that does and doesn't demonstrate,
+and [docs/deployment.md](docs/deployment.md) for what a real cloud handoff
+would still require.
 
 ## Future Improvements
 
-- Replace baseline ML logic with Prophet, LSTM, or online forecasting.
-- Add real autoscaler integration with Kubernetes metrics.
+- A live ml-service replica's p99 latency slipped to 436ms (> the 400ms SLO)
+  under a 190 rps spike during the autoscaling experiment (see
+  [docs/autoscaling.md](docs/autoscaling.md)) — the KEDA setup in this repo
+  scales `gateway-service`, not `ml-service` itself; extending it to
+  ml-service is the next scaling gap.
 - Add multi-region routing support.
 - Add authentication and tenant-aware traffic policies.
-- Add persistent model artifacts and automated retraining pipeline.
+- Add persistent model artifacts and automated retraining pipeline (current
+  model is fit in-memory per route on each service restart).
 - Add a frontend dashboard for traffic decisions and prediction review.
-- Add Testcontainers-based integration tests for Kafka, Redis, and PostgreSQL.

@@ -3,13 +3,33 @@ global:
 scrape_configs:
   - job_name: gateway-service
     metrics_path: /actuator/prometheus
-    static_configs: [{targets: [gateway-service:8080]}]
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: {names: [traffic-platform]}
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_service_name], regex: gateway-service, action: keep}
+      - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
   - job_name: feature-service
     metrics_path: /actuator/prometheus
-    static_configs: [{targets: [feature-service:8081]}]
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: {names: [traffic-platform]}
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_service_name], regex: feature-service, action: keep}
+      - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
   - job_name: decision-engine
     metrics_path: /actuator/prometheus
-    static_configs: [{targets: [decision-engine:8082]}]
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: {names: [traffic-platform]}
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_service_name], regex: decision-engine, action: keep}
+      - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
   - job_name: ml-service
     metrics_path: /metrics
-    static_configs: [{targets: [ml-service:8000]}]
+    kubernetes_sd_configs:
+      - role: endpoints
+        namespaces: {names: [traffic-platform]}
+    relabel_configs:
+      - {source_labels: [__meta_kubernetes_service_name], regex: ml-service, action: keep}
+      - {source_labels: [__meta_kubernetes_pod_name], target_label: pod}
